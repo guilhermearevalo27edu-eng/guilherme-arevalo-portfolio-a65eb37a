@@ -1,76 +1,49 @@
 
 
-# Portfólio Profissional — Guilherme Arevalo
+# Plano: Conta Admin + Seção de Midia/Imprensa nos Projetos
 
-## Visão Geral
-Um portfólio profissional impactante, bilíngue (PT/EN), com design inspirado nas imagens de referência mas com cores vibrantes (verde e azul tropical remetendo ao Pantanal/MS). Inclui painel administrativo protegido por login para gerenciar todo o conteúdo.
+## Parte 1 — Criar sua conta admin
 
----
+Vou criar uma edge function chamada `setup-admin` que faz o seguinte:
+1. Cria um usuario com o email `guilhermearevalo27@gmail.com` e uma senha temporaria
+2. Atribui a role `admin` na tabela `user_roles`
+3. Ao fazer login pela primeira vez, o painel vai mostrar um aviso para trocar a senha
 
-## Páginas Públicas
-
-### 1. Hero / Home
-- Seção de impacto em tela cheia com foto sua, seu nome "Guilherme Arevalo" e subtítulo (ex: "Turismo & Tecnologia")
-- Tagline de apresentação
-- Botão "Portfolio" com seta para rolar para baixo
-- Links de redes sociais (Instagram, LinkedIn, WhatsApp, DescubraMS.com, Lattes) sempre visíveis
-
-### 2. Sobre Mim
-- Foto ao lado da biografia
-- Seção "Minha Abordagem" com texto sobre sua paixão por turismo e tecnologia
-- Menção ao Guatá e ao projeto Descubra Mato Grosso do Sul
-- **Formação**: Turismo na UEMS e demais cursos/certificações
-
-### 3. Trabalhos / Projetos
-- Grid com cards dos seus trabalhos (com imagem, título, ano e descrição)
-- Links para cada projeto (DescubraMS, Guatá, etc.)
-- Possibilidade de adicionar novos trabalhos pelo admin
-
-### 4. Certificados
-- Exibição visual dos certificados com ícones/badges
-- Nome do certificado, instituição e ano
-
-### 5. Recomendações / Depoimentos
-- Cards com nome da pessoa, cargo/relação, e print/texto da recomendação
-- Possibilidade de upload de screenshots de mensagens de recomendação
-
-### 6. Contato
-- Seção de agradecimento com foto
-- Informações de contato (email, WhatsApp)
-- Links para todas as redes sociais
-
-### 7. Navegação e Idioma
-- Menu de navegação fixo no topo com links para cada seção
-- Botão de troca de idioma PT 🇧🇷 / EN 🇺🇸 que alterna todo o conteúdo
+Na pagina de login, vou adicionar um fluxo de "troca de senha obrigatoria" para que voce defina sua propria senha ao entrar pela primeira vez.
 
 ---
 
-## Painel Administrativo (protegido por login)
+## Parte 2 — Expandir Projetos com Midia/Imprensa
 
-### Autenticação
-- Tela de login com email e senha (Supabase Auth)
-- Apenas o administrador (você) terá acesso
+Sobre sua pergunta: **sim, adicionar midia e imprensa e uma otima ideia para marca pessoal**. Nao vai poluir — pelo contrario, mostra credibilidade. A chave e organizar bem.
 
-### Gerenciamento de Conteúdo
-- Editar textos da bio, abordagem e informações pessoais
-- Adicionar/editar/remover trabalhos e projetos
-- Adicionar/editar/remover certificados
-- Adicionar/editar/remover recomendações (com upload de imagens/prints)
-- Gerenciar links de redes sociais
-- Editar textos em ambos os idiomas (PT e EN)
+### O que vou fazer:
 
----
+Adicionar uma nova tabela `project_media` para anexar midias aos projetos (materia de jornal, radio, etc.):
 
-## Backend (Lovable Cloud / Supabase)
-- Banco de dados para armazenar todo o conteúdo editável (bio, projetos, certificados, recomendações, links sociais)
-- Autenticação para o painel admin
-- Storage para upload de imagens (fotos de projetos, prints de recomendações, certificados)
+- `id`, `project_id` (referencia ao projeto), `title_pt`, `title_en`, `description_pt`, `description_en`, `media_url` (link da imagem/print), `external_url` (link da materia original), `media_type` (jornal, radio, tv, online), `sort_order`
+
+### Na pagina publica:
+- Cada projeto tera um botao "Ver na midia" que abre um modal/accordion mostrando as materias relacionadas (print + descricao + link)
+- Visual limpo, so aparece se o projeto tiver midias cadastradas
+
+### No painel admin:
+- Dentro de cada projeto, uma subsecao "Midia/Imprensa" onde voce pode adicionar prints de jornal, links de materias, descricoes
 
 ---
 
-## Design
-- Layout inspirado nas imagens de referência (tipografia bold, seções em tela cheia, grid de trabalhos)
-- Paleta vibrante com verde tropical e azul do Pantanal, com acentos quentes
-- Responsivo para celular e desktop
-- Animações sutis de entrada nas seções
+## Parte 3 — Melhorias na Bio (About)
+
+Vou tornar a secao About editavel pelo admin tambem, buscando o conteudo da tabela `site_content`. Vou adicionar suporte para foto de perfil via upload no admin.
+
+---
+
+## Resumo tecnico
+
+1. **Edge function `setup-admin`**: cria usuario + atribui role admin via service role key
+2. **Migracao SQL**: nova tabela `project_media` com RLS (leitura publica, edicao admin)
+3. **AdminDashboard**: subsecao de midia dentro de cada projeto + upload de imagens
+4. **WorkSection**: modal/expandir para mostrar midias do projeto
+5. **AdminLogin**: fluxo de troca de senha na primeira entrada
+6. **AboutSection**: buscar bio da tabela `site_content` + campo de upload de foto no admin
 
