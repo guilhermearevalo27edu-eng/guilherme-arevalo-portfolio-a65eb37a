@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, LogOut } from "lucide-react";
+import { Trash2, Plus, LogOut, ChevronDown, ChevronUp } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Project = Tables<"projects">;
@@ -14,6 +14,19 @@ type Certificate = Tables<"certificates">;
 type Recommendation = Tables<"recommendations">;
 type SocialLink = Tables<"social_links">;
 type SiteContent = Tables<"site_content">;
+
+interface ProjectMedia {
+  id: string;
+  project_id: string;
+  title_pt: string;
+  title_en: string;
+  description_pt: string;
+  description_en: string;
+  media_url: string | null;
+  external_url: string | null;
+  media_type: string;
+  sort_order: number;
+}
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -23,6 +36,8 @@ const AdminDashboard = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [projectMedia, setProjectMedia] = useState<ProjectMedia[]>([]);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     checkAuth();
@@ -38,18 +53,20 @@ const AdminDashboard = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [c, p, cert, rec, sl] = await Promise.all([
+    const [c, p, cert, rec, sl, pm] = await Promise.all([
       supabase.from("site_content").select("*"),
       supabase.from("projects").select("*").order("sort_order"),
       supabase.from("certificates").select("*").order("sort_order"),
       supabase.from("recommendations").select("*").order("sort_order"),
       supabase.from("social_links").select("*").order("sort_order"),
+      supabase.from("project_media").select("*").order("sort_order"),
     ]);
     setContent(c.data || []);
     setProjects(p.data || []);
     setCertificates(cert.data || []);
     setRecommendations(rec.data || []);
     setSocialLinks(sl.data || []);
+    setProjectMedia((pm.data as ProjectMedia[]) || []);
     setLoading(false);
   };
 
@@ -63,6 +80,21 @@ const AdminDashboard = () => {
     if (error) toast.error(error.message); else toast.success("Salvo!");
   };
 
+  // Upload profile photo
+  const uploadProfilePhoto = async (file: File) => {
+    const url = await uploadImage(file, `profile/photo-${Date.now()}`);
+    if (!url) return;
+    // Check if profile_photo key exists
+    const existing = content.find((c) => c.key === "profile_photo");
+    if (existing) {
+      await supabase.from("site_content").update({ value_pt: url, value_en: url, updated_at: new Date().toISOString() }).eq("id", existing.id);
+    } else {
+      await supabase.from("site_content").insert({ key: "profile_photo", value_pt: url, value_en: url });
+    }
+    toast.success("Foto atualizada!");
+    fetchAll();
+  };
+
   // Projects CRUD
   const addProject = async () => {
     const { error } = await supabase.from("projects").insert({ title_pt: "Novo Projeto", title_en: "New Project", sort_order: projects.length });
@@ -74,6 +106,26 @@ const AdminDashboard = () => {
   };
   const deleteProject = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) toast.error(error.message); else fetchAll();
+  };
+
+  // Project Media CRUD
+  const addMedia = async (projectId: string) => {
+    const count = projectMedia.filter((m) => m.project_id === projectId).length;
+    const { error } = await supabase.from("project_media").insert({
+      project_id: projectId,
+      title_pt: "Nova mídia",
+      title_en: "New media",
+      sort_order: count,
+    });
+    if (error) toast.error(error.message); else fetchAll();
+  };
+  const updateMedia = async (id: string, data: Partial<ProjectMedia>) => {
+    const { error } = await supabase.from("project_media").update(data).eq("id", id);
+    if (error) toast.error(error.message); else toast.success("Salvo!");
+  };
+  const deleteMedia = async (id: string) => {
+    const { error } = await supabase.from("project_media").delete().eq("id", id);
     if (error) toast.error(error.message); else fetchAll();
   };
 
@@ -119,6 +171,14 @@ const AdminDashboard = () => {
     return urlData.publicUrl;
   };
 
+  const toggleProjectExpand = (id: string) => {
+    setExpandedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground">Carregando...</p></div>;
 
   return (
@@ -133,7 +193,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="content">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="content">Conteúdo</TabsTrigger>
             <TabsTrigger value="projects">Projetos</TabsTrigger>
             <TabsTrigger value="certificates">Certificados</TabsTrigger>
@@ -142,7 +202,18 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="content" className="space-y-6">
-            {content.map((item) => (
+            {/* Profile Photo Upload */}
+            <div className="border border-border rounded-xl p-6 space-y-4">
+              <p className="font-semibold text-primary">Foto de Perfil</p>
+              <input type="file" accept="image/*" className="text-sm" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadProfilePhoto(file);
+              }} />
+              {content.find((c) => c.key === "profile_photo")?.value_pt && (
+                <img src={content.find((c) => c.key === "profile_photo")!.value_pt} alt="" className="h-24 w-24 rounded-full object-cover" />
+              )}
+            </div>
+            {content.filter((c) => c.key !== "profile_photo").map((item) => (
               <div key={item.id} className="border border-border rounded-xl p-6 space-y-4">
                 <p className="font-semibold text-primary capitalize">{item.key}</p>
                 <div>
@@ -159,33 +230,93 @@ const AdminDashboard = () => {
 
           <TabsContent value="projects" className="space-y-6">
             <Button onClick={addProject} size="sm"><Plus size={16} /> Adicionar Projeto</Button>
-            {projects.map((p) => (
-              <div key={p.id} className="border border-border rounded-xl p-6 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 space-y-3">
-                    <Input placeholder="Título PT" defaultValue={p.title_pt} onBlur={(e) => updateProject(p.id, { title_pt: e.target.value })} />
-                    <Input placeholder="Title EN" defaultValue={p.title_en} onBlur={(e) => updateProject(p.id, { title_en: e.target.value })} />
-                    <Textarea placeholder="Descrição PT" defaultValue={p.description_pt} onBlur={(e) => updateProject(p.id, { description_pt: e.target.value })} />
-                    <Textarea placeholder="Description EN" defaultValue={p.description_en} onBlur={(e) => updateProject(p.id, { description_en: e.target.value })} />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input placeholder="Link" defaultValue={p.link || ""} onBlur={(e) => updateProject(p.id, { link: e.target.value })} />
-                      <Input placeholder="Ano" defaultValue={p.year || ""} onBlur={(e) => updateProject(p.id, { year: e.target.value })} />
+            {projects.map((p) => {
+              const media = projectMedia.filter((m) => m.project_id === p.id);
+              const isExpanded = expandedProjects.has(p.id);
+              return (
+                <div key={p.id} className="border border-border rounded-xl p-6 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 space-y-3">
+                      <Input placeholder="Título PT" defaultValue={p.title_pt} onBlur={(e) => updateProject(p.id, { title_pt: e.target.value })} />
+                      <Input placeholder="Title EN" defaultValue={p.title_en} onBlur={(e) => updateProject(p.id, { title_en: e.target.value })} />
+                      <Textarea placeholder="Descrição PT" defaultValue={p.description_pt} onBlur={(e) => updateProject(p.id, { description_pt: e.target.value })} />
+                      <Textarea placeholder="Description EN" defaultValue={p.description_en} onBlur={(e) => updateProject(p.id, { description_en: e.target.value })} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input placeholder="Link" defaultValue={p.link || ""} onBlur={(e) => updateProject(p.id, { link: e.target.value })} />
+                        <Input placeholder="Ano" defaultValue={p.year || ""} onBlur={(e) => updateProject(p.id, { year: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">Imagem do projeto</label>
+                        <input type="file" accept="image/*" className="mt-1 text-sm" onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const url = await uploadImage(file, `projects/${p.id}-${Date.now()}`);
+                          if (url) { updateProject(p.id, { image_url: url }); }
+                        }} />
+                        {p.image_url && <img src={p.image_url} alt="" className="mt-2 h-20 rounded object-cover" />}
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-sm text-muted-foreground">Imagem do projeto</label>
-                      <input type="file" accept="image/*" className="mt-1 text-sm" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const url = await uploadImage(file, `projects/${p.id}-${Date.now()}`);
-                        if (url) { updateProject(p.id, { image_url: url }); }
-                      }} />
-                      {p.image_url && <img src={p.image_url} alt="" className="mt-2 h-20 rounded object-cover" />}
-                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => deleteProject(p.id)}><Trash2 size={16} className="text-destructive" /></Button>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => deleteProject(p.id)}><Trash2 size={16} className="text-destructive" /></Button>
+
+                  {/* Media/Press Section */}
+                  <div className="border-t border-border pt-3 mt-3">
+                    <button
+                      onClick={() => toggleProjectExpand(p.id)}
+                      className="flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                    >
+                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      Mídia/Imprensa ({media.length})
+                    </button>
+                    {isExpanded && (
+                      <div className="mt-3 space-y-4">
+                        <Button onClick={() => addMedia(p.id)} size="sm" variant="outline">
+                          <Plus size={14} /> Adicionar Mídia
+                        </Button>
+                        {media.map((m) => (
+                          <div key={m.id} className="border border-border/50 rounded-lg p-4 space-y-2 bg-muted/30">
+                            <div className="flex justify-between">
+                              <div className="flex-1 space-y-2">
+                                <Input placeholder="Título PT" defaultValue={m.title_pt} onBlur={(e) => updateMedia(m.id, { title_pt: e.target.value })} />
+                                <Input placeholder="Title EN" defaultValue={m.title_en} onBlur={(e) => updateMedia(m.id, { title_en: e.target.value })} />
+                                <Textarea placeholder="Descrição PT" defaultValue={m.description_pt} onBlur={(e) => updateMedia(m.id, { description_pt: e.target.value })} />
+                                <Textarea placeholder="Description EN" defaultValue={m.description_en} onBlur={(e) => updateMedia(m.id, { description_en: e.target.value })} />
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input placeholder="Link externo" defaultValue={m.external_url || ""} onBlur={(e) => updateMedia(m.id, { external_url: e.target.value })} />
+                                  <select
+                                    defaultValue={m.media_type}
+                                    onChange={(e) => updateMedia(m.id, { media_type: e.target.value })}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                  >
+                                    <option value="jornal">Jornal</option>
+                                    <option value="radio">Rádio</option>
+                                    <option value="tv">TV</option>
+                                    <option value="online">Online</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground">Imagem/Print</label>
+                                  <input type="file" accept="image/*" className="mt-1 text-sm" onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const url = await uploadImage(file, `media/${m.id}-${Date.now()}`);
+                                    if (url) updateMedia(m.id, { media_url: url });
+                                  }} />
+                                  {m.media_url && <img src={m.media_url} alt="" className="mt-2 h-20 rounded object-cover" />}
+                                </div>
+                              </div>
+                              <Button variant="ghost" size="icon" onClick={() => deleteMedia(m.id)}>
+                                <Trash2 size={14} className="text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </TabsContent>
 
           <TabsContent value="certificates" className="space-y-6">
