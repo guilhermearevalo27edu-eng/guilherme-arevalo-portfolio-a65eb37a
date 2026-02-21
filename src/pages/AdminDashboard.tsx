@@ -158,9 +158,17 @@ const AdminDashboard = () => {
   };
 
   // Social links CRUD
+  const addSocialLink = async () => {
+    const { error } = await supabase.from("social_links").insert({ platform: "Novo Link", url: "https://", icon: "link", sort_order: socialLinks.length });
+    if (error) toast.error(error.message); else fetchAll();
+  };
   const updateSocialLink = async (id: string, data: Partial<SocialLink>) => {
     const { error } = await supabase.from("social_links").update(data).eq("id", id);
     if (error) toast.error(error.message); else toast.success("Salvo!");
+  };
+  const deleteSocialLink = async (id: string) => {
+    const { error } = await supabase.from("social_links").delete().eq("id", id);
+    if (error) toast.error(error.message); else fetchAll();
   };
 
   // Image upload
@@ -366,10 +374,31 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="social" className="space-y-6">
+            <Button onClick={addSocialLink} size="sm"><Plus size={16} /> Adicionar Link</Button>
             {socialLinks.map((s) => (
               <div key={s.id} className="border border-border rounded-xl p-6 space-y-3">
-                <p className="font-semibold">{s.platform}</p>
-                <Input placeholder="URL" defaultValue={s.url} onBlur={(e) => updateSocialLink(s.id, { url: e.target.value })} />
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 space-y-3">
+                    <Input placeholder="Plataforma (ex: Instagram)" defaultValue={s.platform} onBlur={(e) => updateSocialLink(s.id, { platform: e.target.value })} />
+                    <Input placeholder="URL" defaultValue={s.url} onBlur={(e) => updateSocialLink(s.id, { url: e.target.value })} />
+                    <div>
+                      <label className="text-sm text-muted-foreground">Ícone</label>
+                      <select
+                        defaultValue={s.icon}
+                        onChange={(e) => updateSocialLink(s.id, { icon: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
+                      >
+                        <option value="instagram">Instagram</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="message-circle">WhatsApp</option>
+                        <option value="external-link">Link Externo</option>
+                        <option value="graduation-cap">Lattes/Acadêmico</option>
+                        <option value="link">Link Genérico</option>
+                      </select>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => deleteSocialLink(s.id)}><Trash2 size={16} className="text-destructive" /></Button>
+                </div>
               </div>
             ))}
           </TabsContent>
