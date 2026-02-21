@@ -1,49 +1,39 @@
 
 
-# Plano: Conta Admin + Seção de Midia/Imprensa nos Projetos
+# Plano: Garantir que tudo funcione no Admin e Login
 
-## Parte 1 — Criar sua conta admin
+## O que ja esta pronto
+- Conta admin criada com email `guilhermearevalo27@gmail.com` e senha temporaria `TrocarSenha123!`
+- Role admin atribuida no banco
+- Edge function `setup-admin` funcionando
+- Login com fluxo de troca de senha obrigatoria implementado
+- Painel admin com abas para Conteudo, Projetos, Certificados, Recomendacoes e Redes Sociais
+- Secao de midia/imprensa dentro dos projetos
+- WorkSection com modal para exibir midias
+- AboutSection buscando conteudo dinamico
 
-Vou criar uma edge function chamada `setup-admin` que faz o seguinte:
-1. Cria um usuario com o email `guilhermearevalo27@gmail.com` e uma senha temporaria
-2. Atribui a role `admin` na tabela `user_roles`
-3. Ao fazer login pela primeira vez, o painel vai mostrar um aviso para trocar a senha
+## O que precisa ser feito
 
-Na pagina de login, vou adicionar um fluxo de "troca de senha obrigatoria" para que voce defina sua propria senha ao entrar pela primeira vez.
+### 1. Inserir registros iniciais no `site_content`
+O AboutSection busca as chaves `about_title` e `profile_photo`, mas elas nao existem no banco. Sem elas, o titulo e a foto nao aparecem e nao podem ser editados pelo admin. Vou criar uma migracao SQL para inserir essas chaves com valores padrao.
 
----
+### 2. Adicionar links sociais iniciais
+A tabela `social_links` esta vazia. Vou inserir os links padrao (Instagram, LinkedIn, WhatsApp, Lattes, DescubraMS) para que o admin possa editar e eles aparecam no site. Tambem preciso adicionar um botao "Adicionar Link" no painel admin para redes sociais.
 
-## Parte 2 — Expandir Projetos com Midia/Imprensa
+### 3. Corrigir o AdminDashboard — Redes Sociais
+Atualmente a aba de Redes Sociais so permite editar links existentes, mas nao tem botao para adicionar ou remover. Vou adicionar funcionalidade completa de CRUD.
 
-Sobre sua pergunta: **sim, adicionar midia e imprensa e uma otima ideia para marca pessoal**. Nao vai poluir — pelo contrario, mostra credibilidade. A chave e organizar bem.
-
-### O que vou fazer:
-
-Adicionar uma nova tabela `project_media` para anexar midias aos projetos (materia de jornal, radio, etc.):
-
-- `id`, `project_id` (referencia ao projeto), `title_pt`, `title_en`, `description_pt`, `description_en`, `media_url` (link da imagem/print), `external_url` (link da materia original), `media_type` (jornal, radio, tv, online), `sort_order`
-
-### Na pagina publica:
-- Cada projeto tera um botao "Ver na midia" que abre um modal/accordion mostrando as materias relacionadas (print + descricao + link)
-- Visual limpo, so aparece se o projeto tiver midias cadastradas
-
-### No painel admin:
-- Dentro de cada projeto, uma subsecao "Midia/Imprensa" onde voce pode adicionar prints de jornal, links de materias, descricoes
-
----
-
-## Parte 3 — Melhorias na Bio (About)
-
-Vou tornar a secao About editavel pelo admin tambem, buscando o conteudo da tabela `site_content`. Vou adicionar suporte para foto de perfil via upload no admin.
+### 4. Garantir que o fluxo de login funcione corretamente
+Revisar o AdminLogin para confirmar que:
+- Login com credenciais temporarias funciona
+- Fluxo de troca de senha aparece
+- Apos trocar senha, redireciona para o admin
 
 ---
 
 ## Resumo tecnico
 
-1. **Edge function `setup-admin`**: cria usuario + atribui role admin via service role key
-2. **Migracao SQL**: nova tabela `project_media` com RLS (leitura publica, edicao admin)
-3. **AdminDashboard**: subsecao de midia dentro de cada projeto + upload de imagens
-4. **WorkSection**: modal/expandir para mostrar midias do projeto
-5. **AdminLogin**: fluxo de troca de senha na primeira entrada
-6. **AboutSection**: buscar bio da tabela `site_content` + campo de upload de foto no admin
+1. **Migracao SQL**: Inserir `about_title` e `profile_photo` na tabela `site_content`, e links sociais iniciais na `social_links`
+2. **AdminDashboard**: Adicionar botoes de adicionar/remover na aba de Redes Sociais
+3. **Verificacao**: Testar login e fluxo completo
 
