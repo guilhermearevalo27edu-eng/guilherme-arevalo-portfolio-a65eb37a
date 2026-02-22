@@ -12,6 +12,8 @@ const AboutSection = () => {
       const { data } = await supabase.from("site_content").select("*");
       return data || [];
     },
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const getContent = (key: string) => {
