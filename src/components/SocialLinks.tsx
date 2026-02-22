@@ -30,10 +30,11 @@ const SocialLinks = ({ className = "", direction = "row" }: Props) => {
       {links.map((link) => {
         const iconName = iconMap[link.icon] || "Link";
         const IconComponent = (LucideIcons as any)[iconName];
+        const href = link.url && !link.url.startsWith("http") ? `https://${link.url}` : link.url;
         return (
           <a
             key={link.id}
-            href={link.url}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
             className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all"

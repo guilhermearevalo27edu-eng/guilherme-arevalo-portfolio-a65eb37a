@@ -2,9 +2,29 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import SocialLinks from "@/components/SocialLinks";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
+
+  const { data: content = [] } = useQuery({
+    queryKey: ["site_content"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_content").select("*");
+      return data || [];
+    },
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  const getContent = (key: string) => {
+    const item = content.find((c) => c.key === key);
+    if (!item) return "";
+    return lang === "pt" ? item.value_pt : item.value_en;
+  };
+
+  const heroPhotoUrl = getContent("hero_photo");
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -53,7 +73,11 @@ const HeroSection = () => {
           className="relative hidden md:block"
         >
           <div className="aspect-[3/4] rounded-2xl bg-muted/50 border border-border overflow-hidden flex items-center justify-center">
-            <p className="text-muted-foreground text-sm">{t("Sua foto aqui", "Your photo here")}</p>
+            {heroPhotoUrl ? (
+              <img src={heroPhotoUrl} alt={t("Foto do Hero", "Hero photo")} className="w-full h-full object-cover" />
+            ) : (
+              <p className="text-muted-foreground text-sm">{t("Sua foto aqui", "Your photo here")}</p>
+            )}
           </div>
           <div className="absolute -bottom-4 -right-4 w-32 h-32 border-2 border-primary rounded-2xl" />
         </motion.div>

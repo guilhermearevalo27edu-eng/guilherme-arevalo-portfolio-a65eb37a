@@ -212,7 +212,7 @@ const AdminDashboard = () => {
           <TabsContent value="content" className="space-y-6">
             {/* Profile Photo Upload */}
             <div className="border border-border rounded-xl p-6 space-y-4">
-              <p className="font-semibold text-primary">Foto de Perfil</p>
+              <p className="font-semibold text-primary">Foto de Perfil (Sobre Mim)</p>
               <input type="file" accept="image/*" className="text-sm" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) uploadProfilePhoto(file);
@@ -221,7 +221,28 @@ const AdminDashboard = () => {
                 <img src={content.find((c) => c.key === "profile_photo")!.value_pt} alt="" className="h-24 w-24 rounded-full object-cover" />
               )}
             </div>
-            {content.filter((c) => c.key !== "profile_photo").map((item) => (
+            {/* Hero Photo Upload */}
+            <div className="border border-border rounded-xl p-6 space-y-4">
+              <p className="font-semibold text-primary">Foto do Hero (Página Inicial)</p>
+              <input type="file" accept="image/*" className="text-sm" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const url = await uploadImage(file, `profile/hero-${Date.now()}`);
+                if (!url) return;
+                const existing = content.find((c) => c.key === "hero_photo");
+                if (existing) {
+                  await supabase.from("site_content").update({ value_pt: url, value_en: url, updated_at: new Date().toISOString() }).eq("id", existing.id);
+                } else {
+                  await supabase.from("site_content").insert({ key: "hero_photo", value_pt: url, value_en: url });
+                }
+                toast.success("Foto do Hero atualizada!");
+                fetchAll();
+              }} />
+              {content.find((c) => c.key === "hero_photo")?.value_pt && (
+                <img src={content.find((c) => c.key === "hero_photo")!.value_pt} alt="" className="h-24 w-32 rounded object-cover" />
+              )}
+            </div>
+            {content.filter((c) => c.key !== "profile_photo" && c.key !== "hero_photo").map((item) => (
               <div key={item.id} className="border border-border rounded-xl p-6 space-y-4">
                 <p className="font-semibold text-primary capitalize">{item.key}</p>
                 <div>
@@ -338,6 +359,16 @@ const AdminDashboard = () => {
                     <Input placeholder="Instituição PT" defaultValue={c.institution_pt} onBlur={(e) => updateCertificate(c.id, { institution_pt: e.target.value })} />
                     <Input placeholder="Institution EN" defaultValue={c.institution_en} onBlur={(e) => updateCertificate(c.id, { institution_en: e.target.value })} />
                     <Input placeholder="Ano" defaultValue={c.year || ""} onBlur={(e) => updateCertificate(c.id, { year: e.target.value })} />
+                    <div>
+                      <label className="text-sm text-muted-foreground">Imagem do Certificado</label>
+                      <input type="file" accept="image/*" className="mt-1 text-sm" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const url = await uploadImage(file, `certificates/${c.id}-${Date.now()}`);
+                        if (url) { updateCertificate(c.id, { image_url: url } as any); }
+                      }} />
+                      {(c as any).image_url && <img src={(c as any).image_url} alt="" className="mt-2 h-20 rounded object-cover" />}
+                    </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => deleteCertificate(c.id)}><Trash2 size={16} className="text-destructive" /></Button>
                 </div>
