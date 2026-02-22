@@ -30,7 +30,10 @@ const SocialLinks = ({ className = "", direction = "row" }: Props) => {
       {links.map((link) => {
         const iconName = iconMap[link.icon] || "Link";
         const IconComponent = (LucideIcons as any)[iconName];
-        const href = link.url && !link.url.startsWith("http") ? `https://${link.url}` : link.url;
+        const isWhatsApp = link.icon === "message-circle";
+        const href = isWhatsApp
+          ? `https://wa.me/${link.url.replace(/\D/g, '')}`
+          : link.url && !link.url.startsWith("http") ? `https://${link.url}` : link.url;
         return (
           <a
             key={link.id}

@@ -13,6 +13,7 @@ const AboutSection = () => {
       return data || [];
     },
     refetchOnWindowFocus: true,
+    refetchInterval: 5000,
     staleTime: 0,
   });
 
