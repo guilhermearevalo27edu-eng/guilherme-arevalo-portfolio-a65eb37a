@@ -411,7 +411,11 @@ const AdminDashboard = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1 space-y-3">
                     <Input placeholder="Plataforma (ex: Instagram)" defaultValue={s.platform} onBlur={(e) => updateSocialLink(s.id, { platform: e.target.value })} />
-                    <Input placeholder="URL" defaultValue={s.url} onBlur={(e) => updateSocialLink(s.id, { url: e.target.value })} />
+                    {s.icon === "message-circle" ? (
+                      <Input placeholder="Número com DDD e código do país (ex: 5567999999999)" defaultValue={s.url} onBlur={(e) => updateSocialLink(s.id, { url: e.target.value.replace(/\D/g, '') })} />
+                    ) : (
+                      <Input placeholder="URL" defaultValue={s.url} onBlur={(e) => updateSocialLink(s.id, { url: e.target.value })} />
+                    )}
                     <div>
                       <label className="text-sm text-muted-foreground">Ícone</label>
                       <select
