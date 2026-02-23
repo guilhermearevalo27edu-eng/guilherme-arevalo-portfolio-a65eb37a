@@ -75,9 +75,9 @@ const AdminDashboard = () => {
     navigate("/login");
   };
 
-  const updateContent = async (id: string, valuePt: string, valueEn: string) => {
-    const { error } = await supabase.from("site_content").update({ value_pt: valuePt, value_en: valueEn, updated_at: new Date().toISOString() }).eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Salvo!");
+  const updateContentField = async (id: string, field: "value_pt" | "value_en", value: string) => {
+    const { error } = await supabase.from("site_content").update({ [field]: value, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
   };
 
   // Upload profile photo
@@ -247,11 +247,11 @@ const AdminDashboard = () => {
                 <p className="font-semibold text-primary capitalize">{item.key}</p>
                 <div>
                   <label className="text-sm text-muted-foreground">🇧🇷 Português</label>
-                  <Textarea defaultValue={item.value_pt} onBlur={(e) => updateContent(item.id, e.target.value, item.value_en)} />
+                  <Textarea defaultValue={item.value_pt} onBlur={(e) => updateContentField(item.id, "value_pt", e.target.value)} />
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground">🇺🇸 English</label>
-                  <Textarea defaultValue={item.value_en} onBlur={(e) => updateContent(item.id, item.value_pt, e.target.value)} />
+                  <Textarea defaultValue={item.value_en} onBlur={(e) => updateContentField(item.id, "value_en", e.target.value)} />
                 </div>
               </div>
             ))}
