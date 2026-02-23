@@ -24,7 +24,7 @@ const AboutSection = () => {
   };
 
   const profilePhotoUrl = getContent("profile_photo");
-  const bioText = getContent("bio");
+  const bioText = getContent("about") || getContent("bio");
   const aboutTitle = getContent("about_title");
 
   return (
