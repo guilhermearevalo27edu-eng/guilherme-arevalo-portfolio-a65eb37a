@@ -1,65 +1,30 @@
 
 
-# Plano: Corrigir todos os problemas reportados
+# Plano: Corrigir atualizacao de conteudo no site
 
-## Problemas identificados e solucoes
+## Problemas encontrados
 
-### 1. "About" e "Bio" nao atualizam na pagina
-**Causa**: O `AboutSection` usa `useQuery` com cache do React Query, mas o admin atualiza o banco sem invalidar esse cache. Alem disso, o AboutSection busca a chave `"bio"` para o texto, mas o conteudo mais detalhado esta na chave `"about"`. Preciso garantir que o AboutSection use as chaves corretas e que o cache seja invalidado (ou use `refetchOnWindowFocus: true`).
+### 1. Edicoes se sobrescrevem (problema principal)
+O formulario do admin usa `onBlur` para salvar. Quando voce edita o campo Portugues e clica fora, ele salva o portugues mas usa o valor ANTIGO do ingles (da memoria local). Se depois voce edita o ingles e clica fora, ele salva o ingles mas sobrescreve o portugues com o valor antigo. Resultado: parece que nao salvou.
 
-**Solucao**: Adicionar `refetchOnWindowFocus: true` e `staleTime: 0` nas queries do site publico para que ao voltar do admin os dados atualizem automaticamente.
-
-### 2. Certificados — permitir upload de imagem do certificado
-**Causa**: A tabela `certificates` nao tem coluna para imagem. O visual atual e apenas texto.
-
-**Solucao**: 
-- Criar migracao SQL adicionando coluna `image_url` na tabela `certificates`
-- No AdminDashboard, adicionar campo de upload de imagem no formulario de certificados
-- No CertificatesSection, exibir a imagem do certificado quando disponivel (como um card com imagem clicavel)
-
-### 3. Foto do perfil so aparece no "Sobre Mim", nao no Hero
-**Causa**: O `HeroSection` tem um placeholder fixo ("Sua foto aqui") e nao busca a foto do banco. Alem disso, so existe uma chave `profile_photo` no banco.
-
-**Solucao**: 
-- Adicionar nova chave `hero_photo` no `site_content` para a foto do Hero
-- No AdminDashboard, adicionar campo de upload para "Foto do Hero" separado da "Foto de Perfil"
-- No HeroSection, buscar `hero_photo` do banco e exibir a imagem
-
-### 4. Redes sociais — links nao funcionam
-**Causa**: Os links no banco estao sem `https://` no inicio (ex: `www.linkedin.com/...` em vez de `https://www.linkedin.com/...`). O componente `SocialLinks` usa `<a href={link.url}>`, que sem protocolo nao funciona.
-
-**Solucao**: No componente `SocialLinks`, adicionar logica para prefixar `https://` caso a URL nao comece com `http`.
-
-### 5. "Vamos Conversar?" nao e editavel
-**Causa**: O email e o texto da secao de contato estao hardcoded no `ContactSection.tsx`. Nao existe campo no admin para editar.
-
-**Solucao**: 
-- Adicionar chaves `contact_email` e `contact_text` no `site_content`
-- No AdminDashboard, elas ja aparecerao automaticamente na aba Conteudo
-- No ContactSection, buscar esses valores do banco
-
-### 6. "Direitos reservados" — ano nao editavel
-**Causa**: O ano esta usando `new Date().getFullYear()` automaticamente (ja e dinamico, muda sozinho). Mas o texto "Guilherme Arevalo" esta hardcoded.
-
-**Solucao**: 
-- Adicionar chave `footer_name` no `site_content` para o nome do rodape
-- O ano ja e automatico, mas vou deixar editavel tambem se quiser personalizar
+### 2. Campo "About" nao aparece no site
+Existe um campo chamado "About" no admin com o texto detalhado, mas o site le apenas a chave "bio" (que tem o texto curto). O conteudo do "About" nunca e exibido.
 
 ---
 
-## Resumo tecnico das mudancas
+## Solucao
 
-### Banco de dados (migracao SQL)
-- Adicionar coluna `image_url TEXT` na tabela `certificates`
-- Inserir novas chaves no `site_content`: `hero_photo`, `contact_email`, `contact_text`, `footer_name`
+### Arquivo: `src/pages/AdminDashboard.tsx`
+- Corrigir o `updateContent` para buscar o valor atual do OUTRO campo no momento do blur, em vez de usar o valor antigo do estado. Alternativa mais robusta: atualizar apenas o campo que mudou (value_pt OU value_en), nao ambos ao mesmo tempo.
+- Mudar o `onBlur` do Portugues para salvar SOMENTE `value_pt`, e o do Ingles para salvar SOMENTE `value_en`.
+- Apos salvar, chamar `fetchAll()` para atualizar o estado local.
 
-### Arquivos a modificar
-1. **`src/components/sections/HeroSection.tsx`** — buscar `hero_photo` e `tagline` do banco
-2. **`src/components/sections/AboutSection.tsx`** — adicionar `refetchOnWindowFocus` para resolver cache
-3. **`src/components/sections/ContactSection.tsx`** — buscar email e texto do banco
-4. **`src/components/sections/CertificatesSection.tsx`** — exibir imagem do certificado
-5. **`src/components/SocialLinks.tsx`** — corrigir URLs sem protocolo
-6. **`src/pages/AdminDashboard.tsx`** — adicionar upload de foto do Hero, upload de imagem do certificado, e garantir que as novas chaves aparecam na aba Conteudo
+### Arquivo: `src/components/sections/AboutSection.tsx`
+- Trocar `getContent("bio")` por `getContent("about")` para exibir o texto detalhado que voce editou no campo "About".
+- Manter `getContent("about_title")` como esta (funciona corretamente).
+- Usar "bio" apenas como fallback caso "about" esteja vazio.
 
-### Total: 1 migracao + 6 arquivos modificados
-
+### Resumo
+- 2 arquivos modificados
+- Nenhuma mudanca no banco de dados
+- Nao mexe em nada que ja funciona (fotos, redes sociais, certificados, etc.)
