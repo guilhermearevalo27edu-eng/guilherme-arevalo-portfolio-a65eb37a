@@ -1,30 +1,35 @@
 
 
-# Plano: Corrigir atualizacao de conteudo no site
+# Plano: Corrigir campos que nao atualizam apos salvar
 
-## Problemas encontrados
+## Problema encontrado
 
-### 1. Edicoes se sobrescrevem (problema principal)
-O formulario do admin usa `onBlur` para salvar. Quando voce edita o campo Portugues e clica fora, ele salva o portugues mas usa o valor ANTIGO do ingles (da memoria local). Se depois voce edita o ingles e clica fora, ele salva o ingles mas sobrescreve o portugues com o valor antigo. Resultado: parece que nao salvou.
+O formulario do admin usa `defaultValue` nos campos de texto. Em React, `defaultValue` so define o valor na primeira renderizacao. Quando voce salva e o `fetchAll()` busca os dados novos do banco, o React atualiza o estado interno, mas os campos de texto continuam mostrando o valor antigo porque o `defaultValue` nao forca atualizacao.
 
-### 2. Campo "About" nao aparece no site
-Existe um campo chamado "About" no admin com o texto detalhado, mas o site le apenas a chave "bio" (que tem o texto curto). O conteudo do "About" nunca e exibido.
-
----
+Resultado: voce edita, clica fora, aparece "Salvo!", mas o campo continua com o texto antigo. Parece que nao salvou.
 
 ## Solucao
 
-### Arquivo: `src/pages/AdminDashboard.tsx`
-- Corrigir o `updateContent` para buscar o valor atual do OUTRO campo no momento do blur, em vez de usar o valor antigo do estado. Alternativa mais robusta: atualizar apenas o campo que mudou (value_pt OU value_en), nao ambos ao mesmo tempo.
-- Mudar o `onBlur` do Portugues para salvar SOMENTE `value_pt`, e o do Ingles para salvar SOMENTE `value_en`.
-- Apos salvar, chamar `fetchAll()` para atualizar o estado local.
+Adicionar uma prop `key` dinamica nos containers dos campos que muda quando os dados sao atualizados. Isso forca o React a destruir e recriar os inputs com os valores novos.
 
-### Arquivo: `src/components/sections/AboutSection.tsx`
-- Trocar `getContent("bio")` por `getContent("about")` para exibir o texto detalhado que voce editou no campo "About".
-- Manter `getContent("about_title")` como esta (funciona corretamente).
-- Usar "bio" apenas como fallback caso "about" esteja vazio.
+### Arquivo: `src/pages/AdminDashboard.tsx`
+
+**Mudanca 1 - Campos de conteudo (about, bio, tagline, etc.):**
+- Trocar `key={item.id}` por `key={item.id + item.updated_at}` no mapeamento dos itens de conteudo
+- Isso garante que ao salvar (que atualiza `updated_at`), os campos sao recriados com os valores novos
+
+**Mudanca 2 - Projetos, certificados, recomendacoes, redes sociais:**
+- Aplicar a mesma logica com `key` baseado em `created_at` ou outro campo que mude
+- Para projetos: `key={p.id + p.title_pt}` (ou usar um contador de versao)
+
+**Alternativa mais simples (escolhida):**
+- Adicionar um estado `version` que incrementa apos cada `fetchAll()`
+- Usar `key={item.id + "-" + version}` em todos os formularios
+- Uma unica mudanca resolve todos os campos de uma vez
 
 ### Resumo
-- 2 arquivos modificados
+- 1 arquivo modificado (`AdminDashboard.tsx`)
+- Adicionar estado `version` e usar como parte do `key` dos formularios
 - Nenhuma mudanca no banco de dados
-- Nao mexe em nada que ja funciona (fotos, redes sociais, certificados, etc.)
+- Nao mexe em nada que ja funciona
+
