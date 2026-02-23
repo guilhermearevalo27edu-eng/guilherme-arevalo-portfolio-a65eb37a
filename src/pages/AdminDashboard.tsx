@@ -38,6 +38,7 @@ const AdminDashboard = () => {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [projectMedia, setProjectMedia] = useState<ProjectMedia[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     checkAuth();
@@ -67,6 +68,7 @@ const AdminDashboard = () => {
     setRecommendations(rec.data || []);
     setSocialLinks(sl.data || []);
     setProjectMedia((pm.data as ProjectMedia[]) || []);
+    setVersion((v) => v + 1);
     setLoading(false);
   };
 
@@ -102,7 +104,7 @@ const AdminDashboard = () => {
   };
   const updateProject = async (id: string, data: Partial<Project>) => {
     const { error } = await supabase.from("projects").update(data).eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Salvo!");
+    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
   };
   const deleteProject = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
@@ -122,7 +124,7 @@ const AdminDashboard = () => {
   };
   const updateMedia = async (id: string, data: Partial<ProjectMedia>) => {
     const { error } = await supabase.from("project_media").update(data).eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Salvo!");
+    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
   };
   const deleteMedia = async (id: string) => {
     const { error } = await supabase.from("project_media").delete().eq("id", id);
@@ -136,7 +138,7 @@ const AdminDashboard = () => {
   };
   const updateCertificate = async (id: string, data: Partial<Certificate>) => {
     const { error } = await supabase.from("certificates").update(data).eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Salvo!");
+    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
   };
   const deleteCertificate = async (id: string) => {
     const { error } = await supabase.from("certificates").delete().eq("id", id);
@@ -150,7 +152,7 @@ const AdminDashboard = () => {
   };
   const updateRecommendation = async (id: string, data: Partial<Recommendation>) => {
     const { error } = await supabase.from("recommendations").update(data).eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Salvo!");
+    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
   };
   const deleteRecommendation = async (id: string) => {
     const { error } = await supabase.from("recommendations").delete().eq("id", id);
@@ -164,7 +166,7 @@ const AdminDashboard = () => {
   };
   const updateSocialLink = async (id: string, data: Partial<SocialLink>) => {
     const { error } = await supabase.from("social_links").update(data).eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Salvo!");
+    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
   };
   const deleteSocialLink = async (id: string) => {
     const { error } = await supabase.from("social_links").delete().eq("id", id);
@@ -243,7 +245,7 @@ const AdminDashboard = () => {
               )}
             </div>
             {content.filter((c) => c.key !== "profile_photo" && c.key !== "hero_photo").map((item) => (
-              <div key={item.id} className="border border-border rounded-xl p-6 space-y-4">
+              <div key={item.id + "-" + version} className="border border-border rounded-xl p-6 space-y-4">
                 <p className="font-semibold text-primary capitalize">{item.key}</p>
                 <div>
                   <label className="text-sm text-muted-foreground">🇧🇷 Português</label>
@@ -263,7 +265,7 @@ const AdminDashboard = () => {
               const media = projectMedia.filter((m) => m.project_id === p.id);
               const isExpanded = expandedProjects.has(p.id);
               return (
-                <div key={p.id} className="border border-border rounded-xl p-6 space-y-3">
+                <div key={p.id + "-" + version} className="border border-border rounded-xl p-6 space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1 space-y-3">
                       <Input placeholder="Título PT" defaultValue={p.title_pt} onBlur={(e) => updateProject(p.id, { title_pt: e.target.value })} />
@@ -351,7 +353,7 @@ const AdminDashboard = () => {
           <TabsContent value="certificates" className="space-y-6">
             <Button onClick={addCertificate} size="sm"><Plus size={16} /> Adicionar Certificado</Button>
             {certificates.map((c) => (
-              <div key={c.id} className="border border-border rounded-xl p-6 space-y-3">
+              <div key={c.id + "-" + version} className="border border-border rounded-xl p-6 space-y-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 space-y-3">
                     <Input placeholder="Nome PT" defaultValue={c.name_pt} onBlur={(e) => updateCertificate(c.id, { name_pt: e.target.value })} />
@@ -379,7 +381,7 @@ const AdminDashboard = () => {
           <TabsContent value="recommendations" className="space-y-6">
             <Button onClick={addRecommendation} size="sm"><Plus size={16} /> Adicionar Recomendação</Button>
             {recommendations.map((r) => (
-              <div key={r.id} className="border border-border rounded-xl p-6 space-y-3">
+              <div key={r.id + "-" + version} className="border border-border rounded-xl p-6 space-y-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 space-y-3">
                     <Input placeholder="Nome da pessoa" defaultValue={r.person_name} onBlur={(e) => updateRecommendation(r.id, { person_name: e.target.value })} />
@@ -407,7 +409,7 @@ const AdminDashboard = () => {
           <TabsContent value="social" className="space-y-6">
             <Button onClick={addSocialLink} size="sm"><Plus size={16} /> Adicionar Link</Button>
             {socialLinks.map((s) => (
-              <div key={s.id} className="border border-border rounded-xl p-6 space-y-3">
+              <div key={s.id + "-" + version} className="border border-border rounded-xl p-6 space-y-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 space-y-3">
                     <Input placeholder="Plataforma (ex: Instagram)" defaultValue={s.platform} onBlur={(e) => updateSocialLink(s.id, { platform: e.target.value })} />
