@@ -78,8 +78,13 @@ const AdminDashboard = () => {
   };
 
   const updateContentField = async (id: string, field: "value_pt" | "value_en", value: string) => {
-    const { error } = await supabase.from("site_content").update({ [field]: value, updated_at: new Date().toISOString() }).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
+    const updated_at = new Date().toISOString();
+    const { error } = await supabase.from("site_content").update({ [field]: value, updated_at }).eq("id", id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Salvo!");
+      setContent((prev) => prev.map((c) => c.id === id ? { ...c, [field]: value, updated_at } : c));
+    }
   };
 
   // Upload profile photo
@@ -104,7 +109,11 @@ const AdminDashboard = () => {
   };
   const updateProject = async (id: string, data: Partial<Project>) => {
     const { error } = await supabase.from("projects").update(data).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Salvo!");
+      setProjects((prev) => prev.map((p) => p.id === id ? { ...p, ...data } : p));
+    }
   };
   const deleteProject = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
@@ -124,7 +133,11 @@ const AdminDashboard = () => {
   };
   const updateMedia = async (id: string, data: Partial<ProjectMedia>) => {
     const { error } = await supabase.from("project_media").update(data).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Salvo!");
+      setProjectMedia((prev) => prev.map((m) => m.id === id ? { ...m, ...data } : m));
+    }
   };
   const deleteMedia = async (id: string) => {
     const { error } = await supabase.from("project_media").delete().eq("id", id);
@@ -138,7 +151,11 @@ const AdminDashboard = () => {
   };
   const updateCertificate = async (id: string, data: Partial<Certificate>) => {
     const { error } = await supabase.from("certificates").update(data).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Salvo!");
+      setCertificates((prev) => prev.map((c) => c.id === id ? { ...c, ...data } : c));
+    }
   };
   const deleteCertificate = async (id: string) => {
     const { error } = await supabase.from("certificates").delete().eq("id", id);
@@ -152,7 +169,11 @@ const AdminDashboard = () => {
   };
   const updateRecommendation = async (id: string, data: Partial<Recommendation>) => {
     const { error } = await supabase.from("recommendations").update(data).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Salvo!");
+      setRecommendations((prev) => prev.map((r) => r.id === id ? { ...r, ...data } : r));
+    }
   };
   const deleteRecommendation = async (id: string) => {
     const { error } = await supabase.from("recommendations").delete().eq("id", id);
@@ -166,7 +187,11 @@ const AdminDashboard = () => {
   };
   const updateSocialLink = async (id: string, data: Partial<SocialLink>) => {
     const { error } = await supabase.from("social_links").update(data).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Salvo!"); fetchAll(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Salvo!");
+      setSocialLinks((prev) => prev.map((s) => s.id === id ? { ...s, ...data } : s));
+    }
   };
   const deleteSocialLink = async (id: string) => {
     const { error } = await supabase.from("social_links").delete().eq("id", id);

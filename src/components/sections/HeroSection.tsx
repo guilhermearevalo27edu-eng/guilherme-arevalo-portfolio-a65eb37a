@@ -48,7 +48,7 @@ const HeroSection = () => {
             <span className="text-primary">Arevalo</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mb-8 leading-relaxed">
-            {t(
+           {getContent("tagline") || t(
               "Criador do Guatá, idealizador do Descubra Mato Grosso do Sul. Unindo turismo e tecnologia para transformar o cenário sul-mato-grossense.",
               "Creator of Guatá, founder of Descubra Mato Grosso do Sul. Merging tourism and technology to transform the landscape of Mato Grosso do Sul."
             )}
