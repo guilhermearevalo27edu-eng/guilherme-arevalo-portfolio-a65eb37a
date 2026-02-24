@@ -1,41 +1,61 @@
 
 
-# Corrigir texto do Hero e recarregamento ao editar
+# Tagline editavel e controle de visibilidade das secoes
 
-## Problema 1: Texto do Hero nao editavel
-O texto "Criador do Guata, idealizador do Descubra Mato Grosso do Sul..." esta escrito diretamente no codigo do `HeroSection.tsx`. Ele nao vem do banco de dados, por isso nao aparece no admin para editar.
+## Problema 1: Tagline nao aparece no admin
+O registro `tagline` foi inserido no banco de dados, mas pode nao estar aparecendo na aba "Conteudo" do admin. Vou garantir que ele apareca com um label mais claro ("Tagline do Hero") em vez de apenas "tagline".
 
-**Solucao:**
-- Criar uma chave `tagline` na tabela `site_content` (via insert, nao migration) com o texto atual em PT e EN
-- Modificar `HeroSection.tsx` para buscar `getContent("tagline")` em vez do texto fixo
-- O campo ja vai aparecer automaticamente no admin porque ele exibe todos os itens de `site_content`
+**Verificacao:** O campo ja deveria aparecer na aba "Conteudo" junto com os outros campos (about, bio, etc.). Vou adicionar um mapa de labels amigaveis para que os nomes dos campos sejam mais claros no admin.
 
-## Problema 2: Formulario "recarrega" ao editar
-Toda vez que voce clica fora de um campo, o sistema salva, busca tudo de novo e incrementa a `version`. Isso faz o React destruir e recriar TODOS os campos do formulario, causando um "flash" que parece recarregamento de pagina. Isso atrapalha a edicao de varios campos seguidos.
+## Problema 2: Desativar secoes do portfolio
 
-**Solucao:**
-- Remover o `fetchAll()` de dentro das funcoes de update (`updateContentField`, `updateProject`, etc.)
-- Em vez disso, atualizar o estado local diretamente apos salvar com sucesso
-- Manter `fetchAll()` apenas para operacoes de adicionar/deletar e upload de imagens
-- Isso elimina o "flash" porque os campos nao sao remontados
+Adicionar toggles (botoes liga/desliga) no admin para controlar quais secoes aparecem na pagina inicial.
+
+### Como vai funcionar
+
+1. **Banco de dados**: Inserir registros na tabela `site_content` com chaves como:
+   - `section_work` (Projetos)
+   - `section_certificates` (Certificados)
+   - `section_recommendations` (Recomendacoes)
+   - `section_about` (Sobre Mim)
+   - `section_contact` (Contato)
+   
+   Os valores serao "true" ou "false" (string).
+
+2. **Admin (`AdminDashboard.tsx`)**: 
+   - Adicionar uma nova aba "Visibilidade" (ou colocar no topo da aba "Conteudo")
+   - Mostrar um Switch (toggle) para cada secao
+   - Ao clicar, atualiza o valor no banco entre "true" e "false"
+
+3. **Pagina inicial (`Index.tsx`)**:
+   - Buscar os dados de `site_content` 
+   - Renderizar cada secao condicionalmente baseado no valor do toggle
+
+4. **Labels amigaveis no admin**:
+   - Adicionar um dicionario que traduz as chaves tecnicas para nomes legiveis:
+     - `tagline` -> "Tagline (Hero)"
+     - `about` -> "Sobre Mim (texto)"
+     - `bio` -> "Bio (curta)"
+     - `about_title` -> "Titulo Sobre Mim"
 
 ## Arquivos modificados
 
+### Banco de dados (insercao)
+- Inserir 5 registros em `site_content` com as chaves de visibilidade, todos com valor "true" por padrao
+
 ### `src/pages/AdminDashboard.tsx`
-- `updateContentField`: apos salvar, atualizar o array `content` no estado local em vez de chamar `fetchAll()`
-- `updateProject`: atualizar o array `projects` no estado local
-- `updateMedia`: atualizar o array `projectMedia` no estado local
-- `updateCertificate`: atualizar o array `certificates` no estado local
-- `updateRecommendation`: atualizar o array `recommendations` no estado local
-- `updateSocialLink`: atualizar o array `socialLinks` no estado local
+- Adicionar mapa de labels amigaveis para os campos de conteudo
+- Adicionar secao de toggles de visibilidade na aba "Conteudo" (usando o componente Switch)
+- Filtrar as chaves `section_*` para nao aparecerem como campos de texto editavel
+
+### `src/pages/Index.tsx`
+- Buscar `site_content` do banco
+- Condicionar a renderizacao de cada secao ao valor do toggle correspondente
 
 ### `src/components/sections/HeroSection.tsx`
-- Substituir o `t("Criador do Guata...")` por `getContent("tagline")` com fallback para o texto atual
-
-### Insercao no banco de dados
-- Inserir registro na tabela `site_content` com key `tagline`, contendo o texto em portugues e ingles
+- Nenhuma mudanca (ja usa `getContent("tagline")`)
 
 ## O que NAO muda
-- Fotos, certificados, redes sociais continuam funcionando
-- Adicionar/deletar itens continua chamando `fetchAll()` normalmente
-- O site publico nao e afetado
+- Nenhuma secao some por padrao (tudo comeca ativado)
+- Fotos, redes sociais, projetos continuam funcionando normalmente
+- O admin continua salvando sem recarregar a pagina
