@@ -1,61 +1,61 @@
 
 
-# Corrigir tagline do Hero e adicionar controle de visibilidade
+# Tagline editavel e controle de visibilidade das secoes
 
-## Problema 1: Texto bio sumiu do Hero
+## Problema 1: Tagline nao aparece no admin
+O registro `tagline` foi inserido no banco de dados, mas pode nao estar aparecendo na aba "Conteudo" do admin. Vou garantir que ele apareca com um label mais claro ("Tagline do Hero") em vez de apenas "tagline".
 
-O campo `tagline` no banco esta com o valor errado: "Turismo & Tecnologia" (que e o subtitulo pequeno, nao a bio). Por isso, o texto longo que aparecia abaixo do seu nome sumiu -- o codigo usa `getContent("tagline")` e como retorna "Turismo & Tecnologia", ele substitui a bio inteira.
+**Verificacao:** O campo ja deveria aparecer na aba "Conteudo" junto com os outros campos (about, bio, etc.). Vou adicionar um mapa de labels amigaveis para que os nomes dos campos sejam mais claros no admin.
 
-**Solucao:**
-- Atualizar o valor do `tagline` no banco para o texto correto (a bio longa do Hero)
-- Adicionar labels amigaveis no admin para que os campos fiquem claros:
-  - `tagline` -> "Texto do Hero (abaixo do nome)"
-  - `about` -> "Sobre Mim (texto completo)"
-  - `bio` -> "Bio (texto curto)"
-  - `about_title` -> "Titulo da secao Sobre"
-  - `contact_email` -> "Email de contato"
-  - `contact_text_pt` -> "Texto de contato"
-  - `footer_name` -> "Nome no rodape"
+## Problema 2: Desativar secoes do portfolio
 
-## Problema 2: Ativar/desativar secoes do site
-
-Adicionar toggles (liga/desliga) no admin para controlar quais secoes aparecem no site.
+Adicionar toggles (botoes liga/desliga) no admin para controlar quais secoes aparecem na pagina inicial.
 
 ### Como vai funcionar
 
-1. **Banco de dados**: Inserir 5 registros em `site_content`:
-   - `section_about` = "true"
-   - `section_work` = "true"
-   - `section_certificates` = "true"
-   - `section_recommendations` = "true"
-   - `section_contact` = "true"
+1. **Banco de dados**: Inserir registros na tabela `site_content` com chaves como:
+   - `section_work` (Projetos)
+   - `section_certificates` (Certificados)
+   - `section_recommendations` (Recomendacoes)
+   - `section_about` (Sobre Mim)
+   - `section_contact` (Contato)
+   
+   Os valores serao "true" ou "false" (string).
 
-2. **Admin**: Adicionar uma secao "Visibilidade das Secoes" no topo da aba "Conteudo" com switches para cada secao. Ao clicar, alterna entre "true" e "false" no banco.
+2. **Admin (`AdminDashboard.tsx`)**: 
+   - Adicionar uma nova aba "Visibilidade" (ou colocar no topo da aba "Conteudo")
+   - Mostrar um Switch (toggle) para cada secao
+   - Ao clicar, atualiza o valor no banco entre "true" e "false"
 
-3. **Pagina inicial**: Buscar `site_content` e renderizar cada secao apenas se o toggle correspondente estiver "true".
+3. **Pagina inicial (`Index.tsx`)**:
+   - Buscar os dados de `site_content` 
+   - Renderizar cada secao condicionalmente baseado no valor do toggle
 
-## Detalhes tecnicos
+4. **Labels amigaveis no admin**:
+   - Adicionar um dicionario que traduz as chaves tecnicas para nomes legiveis:
+     - `tagline` -> "Tagline (Hero)"
+     - `about` -> "Sobre Mim (texto)"
+     - `bio` -> "Bio (curta)"
+     - `about_title` -> "Titulo Sobre Mim"
 
-### Banco de dados
-- Atualizar valor do registro `tagline` para o texto bio correto
-- Inserir 5 registros de visibilidade com valor "true"
+## Arquivos modificados
+
+### Banco de dados (insercao)
+- Inserir 5 registros em `site_content` com as chaves de visibilidade, todos com valor "true" por padrao
 
 ### `src/pages/AdminDashboard.tsx`
-- Importar o componente `Switch`
-- Criar mapa de labels amigaveis (dicionario chave -> nome legivel)
-- Filtrar chaves `section_*` para nao aparecerem como campos de texto
-- Adicionar secao de toggles usando Switch para cada secao
-- Usar o label amigavel em vez de `item.key` nos campos de conteudo
+- Adicionar mapa de labels amigaveis para os campos de conteudo
+- Adicionar secao de toggles de visibilidade na aba "Conteudo" (usando o componente Switch)
+- Filtrar as chaves `section_*` para nao aparecerem como campos de texto editavel
 
 ### `src/pages/Index.tsx`
-- Buscar dados de `site_content` com useQuery
-- Criar funcao `getContent(key)`
-- Condicionar cada secao: `{getContent("section_work") !== "false" && <WorkSection />}`
+- Buscar `site_content` do banco
+- Condicionar a renderizacao de cada secao ao valor do toggle correspondente
 
 ### `src/components/sections/HeroSection.tsx`
-- Nenhuma mudanca necessaria (ja usa `getContent("tagline")`)
+- Nenhuma mudanca (ja usa `getContent("tagline")`)
 
 ## O que NAO muda
-- Todas as secoes comecam ativadas por padrao
-- Fotos, redes sociais, projetos continuam funcionando
-- O formulario continua salvando sem recarregar
+- Nenhuma secao some por padrao (tudo comeca ativado)
+- Fotos, redes sociais, projetos continuam funcionando normalmente
+- O admin continua salvando sem recarregar a pagina

@@ -7,7 +7,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus, LogOut, ChevronDown, ChevronUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import type { Tables } from "@/integrations/supabase/types";
+
+const FRIENDLY_LABELS: Record<string, string> = {
+  tagline: "Texto do Hero (abaixo do nome)",
+  about: "Sobre Mim (texto completo)",
+  bio: "Bio (texto curto)",
+  about_title: "Título da seção Sobre",
+  contact_email: "Email de contato",
+  contact_text_pt: "Texto de contato",
+  footer_name: "Nome no rodapé",
+};
+
+const SECTION_LABELS: Record<string, string> = {
+  section_about: "Sobre Mim",
+  section_work: "Projetos",
+  section_certificates: "Certificados",
+  section_recommendations: "Recomendações",
+  section_contact: "Contato",
+};
 
 type Project = Tables<"projects">;
 type Certificate = Tables<"certificates">;
@@ -237,6 +257,31 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="content" className="space-y-6">
+            {/* Section Visibility Toggles */}
+            <div className="border border-border rounded-xl p-6 space-y-4">
+              <p className="font-semibold text-primary">Visibilidade das Seções</p>
+              <p className="text-sm text-muted-foreground">Ative ou desative seções do site público.</p>
+              <div className="grid gap-3">
+                {content.filter((c) => c.key.startsWith("section_")).map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <Label htmlFor={item.key} className="cursor-pointer">{SECTION_LABELS[item.key] || item.key}</Label>
+                    <Switch
+                      id={item.key}
+                      checked={item.value_pt === "true"}
+                      onCheckedChange={async (checked) => {
+                        const val = checked ? "true" : "false";
+                        const { error } = await supabase.from("site_content").update({ value_pt: val, value_en: val, updated_at: new Date().toISOString() }).eq("id", item.id);
+                        if (error) toast.error(error.message);
+                        else {
+                          toast.success(checked ? "Seção ativada!" : "Seção desativada!");
+                          setContent((prev) => prev.map((c) => c.id === item.id ? { ...c, value_pt: val, value_en: val } : c));
+                        }
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
             {/* Profile Photo Upload */}
             <div className="border border-border rounded-xl p-6 space-y-4">
               <p className="font-semibold text-primary">Foto de Perfil (Sobre Mim)</p>
@@ -269,9 +314,9 @@ const AdminDashboard = () => {
                 <img src={content.find((c) => c.key === "hero_photo")!.value_pt} alt="" className="h-24 w-32 rounded object-cover" />
               )}
             </div>
-            {content.filter((c) => c.key !== "profile_photo" && c.key !== "hero_photo").map((item) => (
+            {content.filter((c) => c.key !== "profile_photo" && c.key !== "hero_photo" && !c.key.startsWith("section_")).map((item) => (
               <div key={item.id + "-" + version} className="border border-border rounded-xl p-6 space-y-4">
-                <p className="font-semibold text-primary capitalize">{item.key}</p>
+                <p className="font-semibold text-primary">{FRIENDLY_LABELS[item.key] || item.key}</p>
                 <div>
                   <label className="text-sm text-muted-foreground">🇧🇷 Português</label>
                   <Textarea defaultValue={item.value_pt} onBlur={(e) => updateContentField(item.id, "value_pt", e.target.value)} />
