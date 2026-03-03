@@ -2,19 +2,36 @@ import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
-  { id: "home", pt: "Início", en: "Home" },
-  { id: "about", pt: "Sobre", en: "About" },
-  { id: "work", pt: "Trabalhos", en: "Work" },
-  { id: "certificates", pt: "Certificados", en: "Certificates" },
-  { id: "recommendations", pt: "Recomendações", en: "Recommendations" },
-  { id: "contact", pt: "Contato", en: "Contact" },
+  { id: "home", pt: "Início", en: "Home", sectionKey: null },
+  { id: "about", pt: "Sobre", en: "About", sectionKey: "section_about" },
+  { id: "work", pt: "Trabalhos", en: "Work", sectionKey: "section_work" },
+  { id: "certificates", pt: "Certificados", en: "Certificates", sectionKey: "section_certificates" },
+  { id: "recommendations", pt: "Recomendações", en: "Recommendations", sectionKey: "section_recommendations" },
+  { id: "contact", pt: "Contato", en: "Contact", sectionKey: "section_contact" },
 ];
 
 const Navbar = () => {
   const { lang, toggle, t } = useLanguage();
   const [open, setOpen] = useState(false);
+
+  const { data: content = [] } = useQuery({
+    queryKey: ["site_content"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_content").select("*");
+      return data || [];
+    },
+    staleTime: 0,
+  });
+
+  const visibleItems = navItems.filter((item) => {
+    if (!item.sectionKey) return true;
+    const entry = content.find((c) => c.key === item.sectionKey);
+    return !entry || entry.value_pt !== "false";
+  });
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -25,7 +42,7 @@ const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
+          {visibleItems.map((item) => (
             <a
               key={item.id}
               href={`#${item.id}`}
@@ -62,7 +79,7 @@ const Navbar = () => {
             className="md:hidden overflow-hidden bg-background border-b border-border"
           >
             <div className="px-6 py-4 flex flex-col gap-4">
-              {navItems.map((item) => (
+              {visibleItems.map((item) => (
                 <a
                   key={item.id}
                   href={`#${item.id}`}

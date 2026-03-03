@@ -40,7 +40,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8 }}
         >
           <p className="text-primary font-medium tracking-widest uppercase text-sm mb-4">
-            {t("Turismo & Tecnologia", "Tourism & Technology")}
+            {getContent("tagline") || t("Turismo & Tecnologia", "Tourism & Technology")}
           </p>
           <h1 className="font-display text-5xl md:text-7xl font-bold leading-tight mb-6">
             Guilherme
@@ -48,7 +48,7 @@ const HeroSection = () => {
             <span className="text-primary">Arevalo</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mb-8 leading-relaxed">
-           {getContent("tagline") || t(
+           {getContent("hero_bio") || t(
               "Criador do Guatá, idealizador do Descubra Mato Grosso do Sul. Unindo turismo e tecnologia para transformar o cenário sul-mato-grossense.",
               "Creator of Guatá, founder of Descubra Mato Grosso do Sul. Merging tourism and technology to transform the landscape of Mato Grosso do Sul."
             )}

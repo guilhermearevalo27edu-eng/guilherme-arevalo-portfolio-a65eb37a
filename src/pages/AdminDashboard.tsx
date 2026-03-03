@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import type { Tables } from "@/integrations/supabase/types";
 
 const FRIENDLY_LABELS: Record<string, string> = {
-  tagline: "Texto do Hero (abaixo do nome)",
+  tagline: "Subtítulo do Hero (acima do nome)",
+  hero_bio: "Bio do Hero (texto abaixo do nome)",
   about: "Sobre Mim (texto completo)",
   bio: "Bio (texto curto)",
   about_title: "Título da seção Sobre",
