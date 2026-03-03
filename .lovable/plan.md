@@ -1,51 +1,61 @@
 
 
-# Corrigir bio do Hero, separar campos e esconder itens do menu
+# Tagline editavel e controle de visibilidade das secoes
 
-## Problema 1: Bio sumiu do Hero
+## Problema 1: Tagline nao aparece no admin
+O registro `tagline` foi inserido no banco de dados, mas pode nao estar aparecendo na aba "Conteudo" do admin. Vou garantir que ele apareca com um label mais claro ("Tagline do Hero") em vez de apenas "tagline".
 
-O campo `tagline` no banco tem o valor "Turismo & Tecnologia" (que e o subtitulo pequeno acima do nome). O codigo do Hero usa `getContent("tagline")` para mostrar o texto longo abaixo do nome, entao ele mostra o texto curto em vez da bio completa.
+**Verificacao:** O campo ja deveria aparecer na aba "Conteudo" junto com os outros campos (about, bio, etc.). Vou adicionar um mapa de labels amigaveis para que os nomes dos campos sejam mais claros no admin.
 
-**Solucao**: Separar em dois campos distintos:
-- `tagline` continua sendo o subtitulo curto ("Turismo & Tecnologia") -- ja usado na linha acima do nome
-- Criar um novo campo `hero_bio` para o texto longo que aparece abaixo do nome
+## Problema 2: Desativar secoes do portfolio
 
-Isso evita confusao e permite editar cada texto independentemente.
+Adicionar toggles (botoes liga/desliga) no admin para controlar quais secoes aparecem na pagina inicial.
 
-### Mudancas:
-- **Banco de dados**: Inserir novo registro `hero_bio` com o texto longo da bio do Hero (o texto original que sumiu)
-- **HeroSection.tsx**: Mudar de `getContent("tagline")` para `getContent("hero_bio")` na linha do paragrafo abaixo do nome. Usar `getContent("tagline")` no subtitulo acima do nome (onde hoje esta hardcoded "Turismo & Tecnologia")
-- **AdminDashboard.tsx**: Adicionar label amigavel `hero_bio: "Bio do Hero (texto abaixo do nome)"`
+### Como vai funcionar
 
-## Problema 2: Menu nao esconde secoes desativadas
+1. **Banco de dados**: Inserir registros na tabela `site_content` com chaves como:
+   - `section_work` (Projetos)
+   - `section_certificates` (Certificados)
+   - `section_recommendations` (Recomendacoes)
+   - `section_about` (Sobre Mim)
+   - `section_contact` (Contato)
+   
+   Os valores serao "true" ou "false" (string).
 
-Quando voce desativa "Certificados" ou "Recomendacoes" no admin, eles somem da pagina mas continuam aparecendo no menu de navegacao.
+2. **Admin (`AdminDashboard.tsx`)**: 
+   - Adicionar uma nova aba "Visibilidade" (ou colocar no topo da aba "Conteudo")
+   - Mostrar um Switch (toggle) para cada secao
+   - Ao clicar, atualiza o valor no banco entre "true" e "false"
 
-**Solucao**: O Navbar vai buscar os dados de `site_content` e esconder os itens de menu das secoes desativadas.
+3. **Pagina inicial (`Index.tsx`)**:
+   - Buscar os dados de `site_content` 
+   - Renderizar cada secao condicionalmente baseado no valor do toggle
 
-### Mudancas:
-
-**`src/components/Navbar.tsx`**:
-- Adicionar `useQuery` para buscar `site_content`
-- Criar mapa de secao para item do menu: `about` -> `section_about`, `work` -> `section_work`, etc.
-- Filtrar os `navItems` para remover os que estao com valor "false"
-- Manter "Home" sempre visivel (nao tem toggle)
-
-## Problema 3: Label do tagline no admin
-
-Atualizar os labels amigaveis para ficarem mais claros:
-- `tagline` -> "Subtitulo do Hero (acima do nome)"
-- `hero_bio` -> "Bio do Hero (texto abaixo do nome)"
+4. **Labels amigaveis no admin**:
+   - Adicionar um dicionario que traduz as chaves tecnicas para nomes legiveis:
+     - `tagline` -> "Tagline (Hero)"
+     - `about` -> "Sobre Mim (texto)"
+     - `bio` -> "Bio (curta)"
+     - `about_title` -> "Titulo Sobre Mim"
 
 ## Arquivos modificados
 
-1. **Banco de dados** (insercao): Novo registro `hero_bio` com o texto bio original
-2. **`src/components/sections/HeroSection.tsx`**: Usar `hero_bio` para o paragrafo e `tagline` para o subtitulo
-3. **`src/components/Navbar.tsx`**: Filtrar itens do menu baseado nos toggles de visibilidade
-4. **`src/pages/AdminDashboard.tsx`**: Atualizar labels amigaveis
-5. **`src/pages/Index.tsx`**: Nenhuma mudanca necessaria (ja funciona)
+### Banco de dados (insercao)
+- Inserir 5 registros em `site_content` com as chaves de visibilidade, todos com valor "true" por padrao
+
+### `src/pages/AdminDashboard.tsx`
+- Adicionar mapa de labels amigaveis para os campos de conteudo
+- Adicionar secao de toggles de visibilidade na aba "Conteudo" (usando o componente Switch)
+- Filtrar as chaves `section_*` para nao aparecerem como campos de texto editavel
+
+### `src/pages/Index.tsx`
+- Buscar `site_content` do banco
+- Condicionar a renderizacao de cada secao ao valor do toggle correspondente
+
+### `src/components/sections/HeroSection.tsx`
+- Nenhuma mudanca (ja usa `getContent("tagline")`)
 
 ## O que NAO muda
-- Os toggles de visibilidade continuam funcionando como antes
-- Todas as outras secoes do admin permanecem iguais
-- Fotos e redes sociais nao sao afetadas
+- Nenhuma secao some por padrao (tudo comeca ativado)
+- Fotos, redes sociais, projetos continuam funcionando normalmente
+- O admin continua salvando sem recarregar a pagina
