@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,38 @@ const AdminLogin = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [showReset, setShowReset] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMustChangePassword(true);
+        toast.info("Defina sua nova senha.");
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Digite seu email.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Enviamos um link de redefinição para o seu email.");
+    setShowReset(false);
+  };
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +128,38 @@ const AdminLogin = () => {
     );
   }
 
+  if (showReset) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="w-full max-w-sm">
+          <h1 className="font-display text-3xl font-bold text-center mb-2">Recuperar Senha</h1>
+          <p className="text-center text-muted-foreground text-sm mb-8">
+            Digite seu email e enviaremos um link para redefinir a senha.
+          </p>
+          <form onSubmit={handleResetRequest} className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Enviando..." : "Enviar link de recuperação"}
+            </Button>
+          </form>
+          <button
+            type="button"
+            onClick={() => setShowReset(false)}
+            className="block w-full text-center mt-4 text-sm text-muted-foreground hover:text-primary"
+          >
+            ← Voltar ao login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
@@ -120,6 +183,14 @@ const AdminLogin = () => {
             {loading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
+        <button
+          type="button"
+          onClick={() => setShowReset(true)}
+          className="block w-full text-center mt-4 text-sm text-muted-foreground hover:text-primary"
+        >
+          Esqueci minha senha
+        </button>
+
         <a href="/" className="block text-center mt-4 text-sm text-muted-foreground hover:text-primary">
           ← Voltar ao portfólio
         </a>

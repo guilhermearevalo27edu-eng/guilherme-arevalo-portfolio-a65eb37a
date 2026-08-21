@@ -1,34 +1,61 @@
 
 
-# Remover marcas do Lovable do site publicado
+# Tagline editavel e controle de visibilidade das secoes
 
-## O que precisa ser feito
+## Problema 1: Tagline nao aparece no admin
+O registro `tagline` foi inserido no banco de dados, mas pode nao estar aparecendo na aba "Conteudo" do admin. Vou garantir que ele apareca com um label mais claro ("Tagline do Hero") em vez de apenas "tagline".
 
-### 1. Esconder o badge "Edit with Lovable" (canto inferior direito)
-O badge está ativo. Vou usar a ferramenta `set_badge_visibility` para escondê-lo. Isso requer plano Pro ou superior.
+**Verificacao:** O campo ja deveria aparecer na aba "Conteudo" junto com os outros campos (about, bio, etc.). Vou adicionar um mapa de labels amigaveis para que os nomes dos campos sejam mais claros no admin.
 
-### 2. Trocar o favicon (ícone na aba do navegador)
-O site está usando o favicon padrão do Lovable. Vou adicionar um favicon personalizado com suas iniciais "GA" (que já é o logo do seu site).
+## Problema 2: Desativar secoes do portfolio
 
-### 3. Atualizar o título e metadados do site
-O `index.html` ainda tem:
-- Título: "Lovable App" → trocar para "Guilherme Arevalo"
-- Author: "Lovable" → trocar para "Guilherme Arevalo"
-- Twitter site: "@Lovable" → remover
-- og:title e og:description com texto genérico do Lovable → atualizar
+Adicionar toggles (botoes liga/desliga) no admin para controlar quais secoes aparecem na pagina inicial.
 
-## Detalhes técnicos
+### Como vai funcionar
 
-### Badge
-- Chamar `set_badge_visibility(hide_badge: true)`
+1. **Banco de dados**: Inserir registros na tabela `site_content` com chaves como:
+   - `section_work` (Projetos)
+   - `section_certificates` (Certificados)
+   - `section_recommendations` (Recomendacoes)
+   - `section_about` (Sobre Mim)
+   - `section_contact` (Contato)
+   
+   Os valores serao "true" ou "false" (string).
 
-### Favicon
-- Criar um favicon SVG simples com "GA" no estilo do logo do site (fundo escuro, texto verde)
-- Adicionar a referência no `index.html`
+2. **Admin (`AdminDashboard.tsx`)**: 
+   - Adicionar uma nova aba "Visibilidade" (ou colocar no topo da aba "Conteudo")
+   - Mostrar um Switch (toggle) para cada secao
+   - Ao clicar, atualiza o valor no banco entre "true" e "false"
 
-### index.html
-- Atualizar `<title>`, meta author, og:title, og:description, twitter tags com informações do seu portfólio
+3. **Pagina inicial (`Index.tsx`)**:
+   - Buscar os dados de `site_content` 
+   - Renderizar cada secao condicionalmente baseado no valor do toggle
 
-## Observação
-- Esconder o badge requer que você esteja no plano Pro ou superior do Lovable
+4. **Labels amigaveis no admin**:
+   - Adicionar um dicionario que traduz as chaves tecnicas para nomes legiveis:
+     - `tagline` -> "Tagline (Hero)"
+     - `about` -> "Sobre Mim (texto)"
+     - `bio` -> "Bio (curta)"
+     - `about_title` -> "Titulo Sobre Mim"
 
+## Arquivos modificados
+
+### Banco de dados (insercao)
+- Inserir 5 registros em `site_content` com as chaves de visibilidade, todos com valor "true" por padrao
+
+### `src/pages/AdminDashboard.tsx`
+- Adicionar mapa de labels amigaveis para os campos de conteudo
+- Adicionar secao de toggles de visibilidade na aba "Conteudo" (usando o componente Switch)
+- Filtrar as chaves `section_*` para nao aparecerem como campos de texto editavel
+
+### `src/pages/Index.tsx`
+- Buscar `site_content` do banco
+- Condicionar a renderizacao de cada secao ao valor do toggle correspondente
+
+### `src/components/sections/HeroSection.tsx`
+- Nenhuma mudanca (ja usa `getContent("tagline")`)
+
+## O que NAO muda
+- Nenhuma secao some por padrao (tudo comeca ativado)
+- Fotos, redes sociais, projetos continuam funcionando normalmente
+- O admin continua salvando sem recarregar a pagina
