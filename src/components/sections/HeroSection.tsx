@@ -14,8 +14,9 @@ const HeroSection = () => {
       const { data } = await supabase.from("site_content").select("*");
       return data || [];
     },
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const getContent = (key: string) => {
@@ -74,7 +75,14 @@ const HeroSection = () => {
         >
           <div className="aspect-[3/4] rounded-2xl bg-muted/50 border border-border overflow-hidden flex items-center justify-center">
             {heroPhotoUrl ? (
-              <img src={heroPhotoUrl} alt={t("Foto do Hero", "Hero photo")} className="w-full h-full object-cover" />
+              <img
+                src={heroPhotoUrl}
+                alt={t("Guilherme Santos Arevalo, turismólogo e criador do Guatá", "Guilherme Santos Arevalo, tourism professional and creator of Guatá")}
+                className="w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+              />
             ) : (
               <p className="text-muted-foreground text-sm">{t("Sua foto aqui", "Your photo here")}</p>
             )}

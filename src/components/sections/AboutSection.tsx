@@ -12,9 +12,9 @@ const AboutSection = () => {
       const { data } = await supabase.from("site_content").select("*");
       return data || [];
     },
-    refetchOnWindowFocus: true,
-    refetchInterval: 5000,
-    staleTime: 0,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const getContent = (key: string) => {
@@ -39,7 +39,13 @@ const AboutSection = () => {
         >
           <div className="aspect-square rounded-2xl bg-muted/50 border border-border overflow-hidden flex items-center justify-center">
             {profilePhotoUrl ? (
-              <img src={profilePhotoUrl} alt={t("Foto de perfil", "Profile photo")} className="w-full h-full object-cover" />
+              <img
+                src={profilePhotoUrl}
+                alt={t("Guilherme Santos Arevalo, turismólogo em Mato Grosso do Sul", "Guilherme Santos Arevalo, tourism professional in Mato Grosso do Sul")}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <p className="text-muted-foreground text-sm">{t("Foto", "Photo")}</p>
             )}
