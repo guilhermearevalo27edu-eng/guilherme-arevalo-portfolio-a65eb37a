@@ -35,19 +35,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLang] = useState<Language>(isEnPath() ? "en" : "pt");
 
   useEffect(() => {
-    const m = META[lang];
-    document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
-    const path = window.location.pathname;
-    if (path === "/" || /^\/en\/?$/.test(path)) {
-      document.title = m.title;
-      setMeta('meta[name="description"]', m.description);
-      setMeta('meta[property="og:title"]', m.title);
-      setMeta('meta[property="og:description"]', m.description);
-      setMeta('meta[property="og:locale"]', lang === "pt" ? "pt_BR" : "en_US");
-      const url = `https://guilhermearevalo.com${lang === "en" ? "/en" : "/"}`;
-      setMeta('meta[property="og:url"]', url);
-      document.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
-    }
+    void META;
+    void setMeta;
   }, [lang]);
 
   const toggle = () => {
