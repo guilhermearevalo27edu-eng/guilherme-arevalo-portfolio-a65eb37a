@@ -84,5 +84,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        var hide = function () {
+          document.querySelectorAll('#lovable-badge, [aria-label="Edit with Lovable"]').forEach(function (el) {
+            el.remove();
+          });
+        };
+        hide();
+        new MutationObserver(hide).observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
   </body>
 </html>

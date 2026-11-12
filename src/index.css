@@ -64,3 +64,15 @@
 html {
   scroll-behavior: smooth;
 }
+
+#lovable-badge,
+#lovable-badge-cta,
+#lovable-badge-close,
+#lovable-badge-text,
+#lovable-badge-divider,
+[aria-label="Edit with Lovable"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
